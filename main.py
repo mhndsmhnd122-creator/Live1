@@ -1,24 +1,23 @@
 import subprocess
 import time
 
-# إعدادات البث التي طلبتها
 KICK_CHANNEL = "https://kick.com/seagull"
 RESTREAM_KEY = "Re_11725544_event1f24e3174647428d86fc1329252bbf36"
 RTMP_DEST = f"rtmp://live.restream.io/live/{RESTREAM_KEY}"
 
 def get_stream_url():
-    print("جاري البحث عن البث المباشر لقناة Seagull...")
+    print("جاري البحث عن البث المباشر لقناة Seagull...", flush=True)
     try:
-        # سحب رابط m3u8 المتجدد تلقائياً
         result = subprocess.run(
             ["yt-dlp", "-g", KICK_CHANNEL],
             capture_output=True, text=True, check=True
         )
         url = result.stdout.strip()
         if url:
+            print(f"تم الحصول على الرابط بنجاح!", flush=True)
             return url
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"خطأ أثناء جلب الرابط: {e}", flush=True)
     return None
 
 def run_stream():
@@ -26,21 +25,22 @@ def run_stream():
         stream_url = get_stream_url()
         
         if not stream_url:
-            print("القناة لا تبث حالياً. إعادة المحاولة بعد 30 ثانية...")
+            print("القناة لا تبث حالياً. إعادة المحاولة بعد 30 ثانية...", flush=True)
             time.sleep(30)
             continue
 
-        print("تم العثور على البث! جاري الإرسال إلى Restream...")
-        # أمر FFmpeg لنقل البث بأقصى سرعة وبدون استهلاك معالج
+        print("جاري بدء نقل البث إلى Restream...", flush=True)
         command = [
             "ffmpeg", "-re", "-i", stream_url,
             "-c:v", "copy", "-c:a", "copy",
             "-f", "flv", RTMP_DEST
         ]
         
-        subprocess.run(command)
+        # تشغيل FFmpeg مع إظهار تفاصيل السرعة والبيانات مباشرة
+        process = subprocess.Popen(command)
+        process.wait()
         
-        print("توقف البث، إعادة المحاولة بعد 10 ثوانٍ...")
+        print("توقف البث أو حدث انقطاع، إعادة المحاولة بعد 10 ثوانٍ...", flush=True)
         time.sleep(10)
 
 if __name__ == "__main__":
