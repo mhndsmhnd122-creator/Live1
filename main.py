@@ -4,7 +4,7 @@ import json
 import urllib.request
 
 # يوزر القناة على كيك
-KICK_USERNAME = "Peerless"
+KICK_USERNAME = "TAF86"
 
 # مفتاح Restream ورابط الخادم
 RESTREAM_KEY = "re_11725544_event1f24e3174647428d86fc1329252bbf36"
