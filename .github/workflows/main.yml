@@ -1,19 +1,27 @@
-name: Restream Seagull
+name: RAYN Kick Restream
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 */4 * * *'
 
 jobs:
   stream:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Tools (FFmpeg & yt-dlp)
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install FFmpeg
         run: |
-          sudo apt update
-          sudo apt install ffmpeg -y
-          pip3 install yt-dlp
-          
-      - name: Start Streaming
-        run: python3 main.py
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Run Main Script
+        run: |
+          python main.py
