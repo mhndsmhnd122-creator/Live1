@@ -1,7 +1,7 @@
 import subprocess
 import time
 
-KICK_CHANNEL = "https://kick.com/seagull"
+KICK_CHANNEL = "https://kick.com/RAYN"
 RESTREAM_KEY = "Re_11725544_event1f24e3174647428d86fc1329252bbf36"
 RTMP_DEST = f"rtmp://live.restream.io/live/{RESTREAM_KEY}"
 
