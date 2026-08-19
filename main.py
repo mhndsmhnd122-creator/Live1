@@ -1,47 +1,65 @@
 import subprocess
-import time
+import sys
+import json
+import urllib.request
 
-KICK_CHANNEL = "https://kick.com/RAYN"
-RESTREAM_KEY = "Re_11725544_event1f24e3174647428d86fc1329252bbf36"
-RTMP_DEST = f"rtmp://live.restream.io/live/{RESTREAM_KEY}"
+# يوزر القناة على كيك
+KICK_USERNAME = "RAYN"
 
-def get_stream_url():
-    print("جاري البحث عن البث المباشر لقناة Seagull...", flush=True)
+# مفتاح Restream ورابط الخادم
+RESTREAM_KEY = "re_11725544_event1f24e3174647428d86fc1329252bbf36"
+RESTREAM_URL = f"rtmp://live.restream.io/live/{RESTREAM_KEY}"
+
+def get_kick_playback_url(username):
+    # جلب معلومات البث المباشر من واجهة كيك برمجياً عبر اليوزر
+    api_url = f"https://kick.com/api/v1/channels/{username}"
+    req = urllib.request.Request(
+        api_url, 
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    )
     try:
-        result = subprocess.run(
-            ["yt-dlp", "-g", KICK_CHANNEL],
-            capture_output=True, text=True, check=True
-        )
-        url = result.stdout.strip()
-        if url:
-            print(f"تم الحصول على الرابط بنجاح!", flush=True)
-            return url
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            playback_url = data.get("playback_url")
+            return playback_url
     except Exception as e:
-        print(f"خطأ أثناء جلب الرابط: {e}", flush=True)
-    return None
+        print(f"خطأ في جلب بيانات القناة: {e}")
+        return None
 
-def run_stream():
-    while True:
-        stream_url = get_stream_url()
-        
-        if not stream_url:
-            print("القناة لا تبث حالياً. إعادة المحاولة بعد 30 ثانية...", flush=True)
-            time.sleep(30)
-            continue
+def start_restream():
+    print(f"جاري البحث عن بث قناة {KICK_USERNAME}...")
+    stream_url = get_kick_playback_url(KICK_USERNAME)
+    
+    if not stream_url:
+        print("القناة غير متصلة حالياً أو رابط البث غير متوفر.")
+        return
 
-        print("جاري بدء نقل البث إلى Restream...", flush=True)
-        command = [
-            "ffmpeg", "-re", "-i", stream_url,
-            "-c:v", "copy", "-c:a", "copy",
-            "-f", "flv", RTMP_DEST
-        ]
+    print(f"تم العثور على رابط البث، بدء إعادة البث إلى Restream...")
+    
+    # أمر FFmpeg لإعادة التوجيه بدون إعادة ترميز لتوفير الاستقرار
+    ffmpeg_command = [
+        "ffmpeg",
+        "-i", stream_url,
+        "-c:v", "copy",
+        "-c:a", "copy",
+        "-f", "flv",
+        STREAM_URL if 'STREAM_URL' in locals() else RESTREAM_URL
+    ]
+    
+    try:
+        process = subprocess.Popen(
+            ffmpeg_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True
+        )
         
-        # تشغيل FFmpeg مع إظهار تفاصيل السرعة والبيانات مباشرة
-        process = subprocess.Popen(command)
-        process.wait()
-        
-        print("توقف البث أو حدث انقطاع، إعادة المحاولة بعد 10 ثوانٍ...", flush=True)
-        time.sleep(10)
+        for line in process.stdout:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            
+    except Exception as e:
+        print(f"حدث خطأ أثناء تشغيل FFmpeg: {e}")
 
 if __name__ == "__main__":
-    run_stream()
+    start_restream()
