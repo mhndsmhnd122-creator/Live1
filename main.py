@@ -49,9 +49,14 @@ def get_kick_livestream_url(username):
 
 def start_restream(stream_url):
     """تشغيل FFmpeg لدمج الصور والتناوب بينها وإرسال البث لـ Restream"""
+    # تصغير الصور وتغيير موقعها إلى أسفل الوسط
+    # [1:v]scale=300:-1[img1_scaled] -> تصغير الصورة 1 لعرض 300 والارتفاع تلقائي
+    # [0:v][img1_scaled]overlay=(main_w-overlay_w)/2:main_h-overlay_h-20... -> وضعها أسفل الوسط بإزاحة 20 بكسل من الأسفل
     filter_complex = (
-        "[0:v][1:v]overlay=20:20:enable='lt(mod(t,10),5)'[tmp];"
-        "[tmp][2:v]overlay=20:20:enable='gte(mod(t,10),5)'[v]"
+        "[1:v]scale=300:-1[img1_scaled];"
+        "[2:v]scale=300:-1[img2_scaled];"
+        "[0:v][img1_scaled]overlay=(main_w-overlay_w)/2:main_h-overlay_h-20:enable='lt(mod(t,10),5)'[tmp];"
+        "[tmp][img2_scaled]overlay=(main_w-overlay_w)/2:main_h-overlay_h-20:enable='gte(mod(t,10),5)'[v]"
     )
 
     ffmpeg_cmd = [
@@ -78,7 +83,7 @@ def start_restream(stream_url):
         RESTREAM_RTMP
     ]
 
-    print("[+] بدء عملية إعادة البث عبر FFmpeg...")
+    print("[+] بدء عملية إعادة البث عبر FFmpeg مع الصور المعدلة...")
     subprocess.run(ffmpeg_cmd)
 
 def main():
