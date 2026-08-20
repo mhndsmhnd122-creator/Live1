@@ -49,7 +49,6 @@ def get_kick_livestream_url(username):
 
 def start_restream(stream_url):
     """تشغيل FFmpeg لدمج الصور والتناوب بينها وإرسال البث لـ Restream"""
-    # التبديل بين الصورتين كل 5 ثوانٍ (تظهر صورة 1 ثم صورة 2 بتناوب مستمر)
     filter_complex = (
         "[0:v][1:v]overlay=20:20:enable='lt(mod(t,10),5)'[tmp];"
         "[tmp][2:v]overlay=20:20:enable='gte(mod(t,10),5)'[v]"
@@ -63,7 +62,7 @@ def start_restream(stream_url):
         '-i', IMG2_LOCAL,
         '-filter_complex', filter_complex,
         '-map', '[v]',
-        '-map', '0:a?',
+        '-map', '0:a:0?',  # تحديد المسار الصوتي الأول فقط لتوافق صيغة FLV
         '-c:v', 'libx264',
         '-preset', 'ultrafast',
         '-tune', 'zerolatency',
