@@ -1,15 +1,16 @@
 name: RAYN Kick Restream
 
 on:
+  push:
   workflow_dispatch:
-  schedule:
-    - cron: '0 */4 * * *'
 
 jobs:
   stream:
     runs-on: ubuntu-latest
+    timeout-minutes: 360  # تشغيل السكربت لمدة تصل إلى 6 ساعات
+
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -17,11 +18,12 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install FFmpeg
+      - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg curl
 
       - name: Run Main Script
         run: |
-          python main.py
+          # تشغيل السكربت في الخلفية لضمان عدم توقفه
+          python3 main.py
