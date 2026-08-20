@@ -16,28 +16,36 @@ IMG2_URL = "https://a.top4top.io/p_3884w5h790.png"
 
 def get_kick_playback_url(username):
     api_url = f"https://kick.com/api/v1/channels/{username}"
+    # تم تحديث الـ Headers لتجاوز خطأ 403 Forbidden نهائياً
     req = urllib.request.Request(
         api_url, 
-        headers={"User-Agent": "Mozilla/5.0"}
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://kick.com/"
+        }
     )
     try:
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode())
-            return data.get("playback_url")
+            playback_url = data.get("playback_url")
+            return playback_url
     except Exception as e:
         print(f"خطأ في جلب بيانات القناة: {e}")
         return None
 
 def start_restream():
+    print(f"جاري البحث عن بث قناة {KICK_USERNAME}...")
     stream_url = get_kick_playback_url(KICK_USERNAME)
+    
     if not stream_url:
-        print("القناة غير متصلة.")
+        print("القناة غير متصلة حالياً أو رابط البث غير متوفر.")
         return
 
-    # فلتر مركب:
-    # 1. scale='130+5*sin(t*4)' تعطي حركة النبض المستمر بالحجم الكبير.
-    # 2. overlay يضعها في أسفل الوسط.
-    # 3. alpha تطبق أنيميشن الظهور والاختفاء (Fade) بين الصور.
+    print(f"تم العثور على رابط البث، بدء إعادة البث مع الصور...")
+
+    # فلتر الصور المتحركة والتبديل كل 10 ثوانٍ مع النبض
     filter_complex = (
         f"movie={IMG1_URL}:s=130x130[img1];"
         f"movie={IMG2_URL}:s=130x130[img2];"
@@ -57,13 +65,30 @@ def start_restream():
         "-filter_complex", filter_complex,
         "-map", "[outv]",
         "-map", "0:a",
-        "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-maxrate", "3000k",
+        "-bufsize", "6000k",
+        "-pix_fmt", "yuv420p",
         "-c:a", "copy",
         "-f", "flv",
         RESTREAM_URL
     ]
     
-    subprocess.run(ffmpeg_command)
+    try:
+        process = subprocess.Popen(
+            ffmpeg_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True
+        )
+        
+        for line in process.stdout:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            
+    except Exception as e:
+        print(f"حدث خطأ أثناء تشغيل FFmpeg: {e}")
 
 if __name__ == "__main__":
     start_restream()
