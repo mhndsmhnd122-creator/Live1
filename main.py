@@ -5,7 +5,7 @@ import subprocess
 import urllib.request
 
 # Configuration
-KICK_USERNAME = "wolf"
+KICK_USERNAME = "F1aisal"
 RESTREAM_KEY = "re_11725544_event1f24e3174647428d86fc1329252bbf36"
 RESTREAM_RTMP = f"rtmp://live.restream.io/live/{RESTREAM_KEY}"
 
